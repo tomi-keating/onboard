@@ -7,5 +7,5 @@ bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/bins
 
 [ -s "$HOME/.gvm/scripts/gvm" ] && . "$HOME/.gvm/scripts/gvm"
 
-gvm install go1.24.13
+gvm install go1.24.13 -B
 gvm use go1.24.13 --default
