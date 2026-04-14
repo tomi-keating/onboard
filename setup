@@ -13,6 +13,7 @@ import sys
 import termios
 import tty
 from pathlib import Path
+from typing import Optional
 
 
 MANDATORY_APPS = {"Precheck", "Homebrew", "iTerm2", "Oh My Zsh"}
@@ -127,7 +128,7 @@ class SetupWizard:
             if raw in ("n", "no"):
                 return False
 
-    def _select_apps(self, all_apps: list, preselected_names: set | None = None) -> list:
+    def _select_apps(self, all_apps: list, preselected_names: Optional[set] = None) -> list:
         """Interactive TUI for app selection. Returns list of selected app dicts."""
         app_names = [a["name"] for a in all_apps]
         selected = set(preselected_names) if preselected_names else set(app_names)
@@ -301,7 +302,7 @@ class SetupWizard:
 
         self._install()
 
-    def run_non_interactive(self, category: str | None = None):
+    def run_non_interactive(self, category: Optional[str] = None):
         self._ensure_homebrew()
 
         all_apps = list(self.catalog)
