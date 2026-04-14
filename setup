@@ -15,7 +15,7 @@ import tty
 from pathlib import Path
 
 
-MANDATORY_APPS = {"iTerm2", "Oh My Zsh"}
+MANDATORY_APPS = {"Homebrew", "iTerm2", "Oh My Zsh"}
 
 
 class C:
@@ -42,7 +42,17 @@ class SetupWizard:
     def _load_catalog(self):
         try:
             with open(self.catalog_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+                # Fallback: support legacy categories schema
+                apps = []
+                for cat in data.get("categories", []):
+                    for app in cat["apps"]:
+                        app_copy = dict(app)
+                        app_copy["category"] = cat["name"]
+                        apps.append(app_copy)
+                return apps
         except FileNotFoundError:
             print(f"{C.RED}Error: Catalog file not found at {self.catalog_path}{C.RESET}")
             sys.exit(1)
@@ -77,6 +87,14 @@ class SetupWizard:
             os.environ["PATH"] = f"{brew_bin}:{current_path}"
 
         print(f"{C.GREEN}Homebrew installed successfully.{C.RESET}")
+
+    @staticmethod
+    def _update_brew_path():
+        arch = os.uname().machine
+        brew_bin = "/opt/homebrew/bin" if arch == "arm64" else "/usr/local/bin"
+        current_path = os.environ.get("PATH", "")
+        if brew_bin not in current_path:
+            os.environ["PATH"] = f"{brew_bin}:{current_path}"
 
     def _load_log(self) -> dict:
         if not self.log_path.exists():
@@ -205,6 +223,8 @@ class SetupWizard:
             if result.returncode == 0:
                 print(f"  {C.GREEN}✓ Success{C.RESET}")
                 self.successes.append(name)
+                if name == "Homebrew":
+                    self._update_brew_path()
             else:
                 print(f"  {C.RED}✗ Failed{C.RESET}")
                 self.failures.append(name)
@@ -245,15 +265,6 @@ class SetupWizard:
         else:
             print(f"{C.GREEN}Homebrew is already installed.{C.RESET}")
 
-    def _flatten_apps(self) -> list:
-        apps = []
-        for cat in self.catalog.get("categories", []):
-            for app in cat["apps"]:
-                app_copy = dict(app)
-                app_copy["_category"] = cat["name"]
-                apps.append(app_copy)
-        return apps
-
     @staticmethod
     def _report_skipped(installed_apps: list):
         if installed_apps:
@@ -265,7 +276,7 @@ class SetupWizard:
     def run(self):
         self._ensure_homebrew()
 
-        all_apps = self._flatten_apps()
+        all_apps = self.catalog
         log = self._load_log()
         retry_failed = self._prompt_retry_failed(log)
 
@@ -276,17 +287,8 @@ class SetupWizard:
 
         selected = self._select_apps(all_apps, preselected)
 
-        selected_terminal = [a for a in selected if a["_category"] == "Terminal"]
-        selected_others = [a for a in selected if a["_category"] != "Terminal"]
-
-        # Terminal category: check up front
-        installed, missing = self._check_apps(selected_terminal)
-        self._report_skipped(installed)
-        self.skipped.extend(a["name"] for a in installed)
-        self.selected.extend(missing)
-
-        # Other categories: check up front
-        installed, missing = self._check_apps(selected_others)
+        # Check up front
+        installed, missing = self._check_apps(selected)
         self._report_skipped(installed)
         self.skipped.extend(a["name"] for a in installed)
         self.selected.extend(missing)
@@ -296,23 +298,13 @@ class SetupWizard:
     def run_non_interactive(self, category: str | None = None):
         self._ensure_homebrew()
 
-        all_apps = self._flatten_apps()
-
+        all_apps = list(self.catalog)
         if category:
             target = category.lower()
-            all_apps = [a for a in all_apps if a["_category"].lower() == target]
+            all_apps = [a for a in all_apps if a.get("category", "").lower() == target]
 
-        selected_terminal = [a for a in all_apps if a["_category"] == "Terminal"]
-        selected_others = [a for a in all_apps if a["_category"] != "Terminal"]
-
-        # Terminal category: check up front
-        installed, missing = self._check_apps(selected_terminal)
-        self._report_skipped(installed)
-        self.skipped.extend(a["name"] for a in installed)
-        self.selected.extend(missing)
-
-        # Other categories: check up front
-        installed, missing = self._check_apps(selected_others)
+        # Check up front
+        installed, missing = self._check_apps(all_apps)
         self._report_skipped(installed)
         self.skipped.extend(a["name"] for a in installed)
         self.selected.extend(missing)
@@ -320,9 +312,13 @@ class SetupWizard:
         self._install()
 
     def list_apps(self):
-        for cat in self.catalog.get("categories", []):
-            print(f"\n{C.BOLD}{cat['name']}{C.RESET}")
-            for app in cat["apps"]:
+        by_category = {}
+        for app in self.catalog:
+            cat = app.get("category", "Other")
+            by_category.setdefault(cat, []).append(app)
+        for cat, apps in by_category.items():
+            print(f"\n{C.BOLD}{cat}{C.RESET}")
+            for app in apps:
                 desc = f" — {app['description']}" if app.get("description") else ""
                 print(f"  • {app['name']}{desc}")
 
