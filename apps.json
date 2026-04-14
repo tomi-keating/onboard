@@ -76,6 +76,16 @@
           "check": "which fzf"
         }
       ]
+    },
+    {
+      "name": "Terminal",
+      "apps": [
+        {
+          "name": "iTerm2",
+          "command": "brew install --cask iterm2",
+          "description": "Popular terminal emulator for macOS"
+        }
+      ]
     }
   ]
 }

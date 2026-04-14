@@ -147,13 +147,35 @@ class SetupWizard:
                 f"\n{C.YELLOW}Run the script again to retry failed installations.{C.RESET}"
             )
 
-    def run(self):
+    def _ensure_homebrew(self):
         if not self._has_homebrew():
             self._install_homebrew()
         else:
             print(f"{C.GREEN}Homebrew is already installed.{C.RESET}")
 
-        for cat in self.catalog.get("categories", []):
+    @staticmethod
+    def _partition_categories(categories: list) -> tuple[list, list]:
+        terminal = []
+        others = []
+        for cat in categories:
+            if cat["name"] == "Terminal":
+                terminal.append(cat)
+            else:
+                others.append(cat)
+        return terminal, others
+
+    def run(self):
+        self._ensure_homebrew()
+
+        terminal_cats, other_cats = self._partition_categories(
+            self.catalog.get("categories", [])
+        )
+
+        # Always install Terminal first without prompting
+        for cat in terminal_cats:
+            self.selected.extend(cat["apps"])
+
+        for cat in other_cats:
             indices = self._prompt_category(cat["name"], cat["apps"])
             for idx in indices:
                 self.selected.append(cat["apps"][idx])
@@ -161,12 +183,23 @@ class SetupWizard:
         self._install()
 
     def run_non_interactive(self, category: str | None = None):
-        if not self._has_homebrew():
-            self._install_homebrew()
-        for cat in self.catalog.get("categories", []):
-            if category and cat["name"].lower() != category.lower():
+        self._ensure_homebrew()
+
+        terminal_cats, other_cats = self._partition_categories(
+            self.catalog.get("categories", [])
+        )
+
+        target_name = category.lower() if category else None
+
+        # Always install Terminal first
+        for cat in terminal_cats:
+            self.selected.extend(cat["apps"])
+
+        for cat in other_cats:
+            if target_name and cat["name"].lower() != target_name:
                 continue
             self.selected.extend(cat["apps"])
+
         self._install()
 
     def list_apps(self):
