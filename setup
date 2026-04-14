@@ -15,7 +15,7 @@ import tty
 from pathlib import Path
 
 
-MANDATORY_APPS = {"Homebrew", "iTerm2", "Oh My Zsh"}
+MANDATORY_APPS = {"Precheck", "Homebrew", "iTerm2", "Oh My Zsh"}
 
 
 class C:
@@ -228,6 +228,12 @@ class SetupWizard:
             else:
                 print(f"  {C.RED}✗ Failed{C.RESET}")
                 self.failures.append(name)
+                if name == "Precheck":
+                    print(
+                        f"\n{C.RED}Precheck failed. "
+                        f"Stopping installation.{C.RESET}"
+                    )
+                    break
 
         # Summary
         print(f"\n{C.BOLD}=== Summary ==={C.RESET}")

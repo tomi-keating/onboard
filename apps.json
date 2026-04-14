@@ -1,5 +1,11 @@
 [
   {
+    "name": "Precheck",
+    "command": "sh scripts/precheck.sh",
+    "description": "Check and install Xcode Command Line Tools",
+    "check": "xcode-select --print-path"
+  },
+  {
     "name": "Homebrew",
     "command": "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"",
     "description": "The missing package manager for macOS",
