@@ -10,7 +10,12 @@ import os
 import shutil
 import subprocess
 import sys
+import termios
+import tty
 from pathlib import Path
+
+
+MANDATORY_APPS = {"iTerm2", "Oh My Zsh"}
 
 
 class C:
@@ -28,8 +33,10 @@ class SetupWizard:
     def __init__(self, catalog_path: Path):
         self.catalog_path = catalog_path
         self.catalog = self._load_catalog()
+        self.log_path = Path(__file__).parent / "setup.log"
         self.selected = []
         self.successes = []
+        self.skipped = []
         self.failures = []
 
     def _load_catalog(self):
@@ -71,34 +78,101 @@ class SetupWizard:
 
         print(f"{C.GREEN}Homebrew installed successfully.{C.RESET}")
 
-    def _prompt_category(self, category_name: str, apps: list) -> list:
-        print(f"\n{C.BOLD}{category_name}{C.RESET}")
-        for i, app in enumerate(apps, 1):
-            desc = f" — {app['description']}" if app.get("description") else ""
-            print(f"  [{i}] {app['name']}{desc}")
-        print("  [0] Skip category")
+    def _load_log(self) -> dict:
+        if not self.log_path.exists():
+            return {}
+        try:
+            with open(self.log_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return {}
 
+    def _save_log(self, results: dict):
+        try:
+            with open(self.log_path, "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=2)
+        except OSError as exc:
+            print(f"{C.YELLOW}Warning: Could not write log: {exc}{C.RESET}")
+
+    @staticmethod
+    def _prompt_retry_failed(log: dict) -> bool:
+        failed = [name for name, status in log.items() if status == "failed"]
+        if not failed:
+            return False
+        print(f"\n{C.YELLOW}Previous run had failures: {', '.join(failed)}{C.RESET}")
         while True:
-            raw = (
-                input(
-                    f"{C.YELLOW}Select (comma-separated numbers, 'all', or 'none'): {C.RESET}"
-                )
-                .strip()
-                .lower()
-            )
-            if raw in ("", "0", "none"):
-                return []
-            if raw == "all":
-                return list(range(len(apps)))
+            raw = input(
+                f"{C.YELLOW}Retry only the failed apps? (y/n): {C.RESET}"
+            ).strip().lower()
+            if raw in ("y", "yes"):
+                return True
+            if raw in ("n", "no"):
+                return False
+
+    def _select_apps(self, all_apps: list, preselected_names: set | None = None) -> list:
+        """Interactive TUI for app selection. Returns list of selected app dicts."""
+        app_names = [a["name"] for a in all_apps]
+        selected = set(preselected_names) if preselected_names else set(app_names)
+        # Ensure mandatory apps are always selected
+        selected.update(n for n in app_names if n in MANDATORY_APPS)
+
+        cursor = 0
+
+        def render():
+            print("\033[2J\033[3J\033[H", end="", flush=True)
+            print(f"{C.BOLD}Select apps to install{C.RESET}")
+            print("↑/↓: navigate  Space: toggle  Enter: confirm  q: quit")
+            print()
+            for i, app in enumerate(all_apps):
+                name = app["name"]
+                is_mandatory = name in MANDATORY_APPS
+                is_selected = name in selected
+                cursor_marker = ">" if i == cursor else " "
+                if is_mandatory:
+                    box = "[M]"
+                else:
+                    box = "[x]" if is_selected else "[ ]"
+                desc = f" — {app['description']}" if app.get("description") else ""
+                print(f"{cursor_marker} {box} {name}{desc}")
+            print()
+
+        def get_key():
+            fd = sys.stdin.fileno()
+            old = termios.tcgetattr(fd)
             try:
-                indices = [int(x.strip()) - 1 for x in raw.split(",")]
-                if all(0 <= idx < len(apps) for idx in indices):
-                    return indices
-                print(f"{C.RED}Invalid selection. Try again.{C.RESET}")
-            except ValueError:
-                print(
-                    f"{C.RED}Invalid input. Use numbers, 'all', or 'none'.{C.RESET}"
-                )
+                tty.setraw(fd)
+                ch = sys.stdin.read(1)
+                if ch == "\x1b":
+                    ch += sys.stdin.read(2)
+                return ch
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+        print("\033[?25l", end="", flush=True)
+        try:
+            while True:
+                render()
+                key = get_key()
+                if key in ("\r", "\n"):
+                    break
+                elif key in ("q", "\x03"):
+                    print(f"\n{C.YELLOW}Cancelled by user.{C.RESET}")
+                    sys.exit(0)
+                elif key == "\x1b[A":
+                    cursor = (cursor - 1) % len(all_apps)
+                elif key == "\x1b[B":
+                    cursor = (cursor + 1) % len(all_apps)
+                elif key == " ":
+                    name = all_apps[cursor]["name"]
+                    if name not in MANDATORY_APPS:
+                        if name in selected:
+                            selected.remove(name)
+                        else:
+                            selected.add(name)
+        finally:
+            print("\033[?25h", end="", flush=True)
+
+        return [a for a in all_apps if a["name"] in selected]
 
     @staticmethod
     def _check_apps(apps: list) -> tuple[list, list]:
@@ -137,9 +211,15 @@ class SetupWizard:
 
         # Summary
         print(f"\n{C.BOLD}=== Summary ==={C.RESET}")
-        print(f"{C.GREEN}Installed / already present: {len(self.successes)}{C.RESET}")
-        for s in self.successes:
-            print(f"  ✓ {s}")
+        if self.successes:
+            print(f"{C.GREEN}Installed: {len(self.successes)}{C.RESET}")
+            for s in self.successes:
+                print(f"  ✓ {s}")
+
+        if self.skipped:
+            print(f"{C.YELLOW}Already present: {len(self.skipped)}{C.RESET}")
+            for s in self.skipped:
+                print(f"  • {s}")
 
         if self.failures:
             print(f"{C.RED}Failed: {len(self.failures)}{C.RESET}")
@@ -149,22 +229,30 @@ class SetupWizard:
                 f"\n{C.YELLOW}Run the script again to retry failed installations.{C.RESET}"
             )
 
+        # Log results
+        results = {}
+        for name in self.successes:
+            results[name] = "success"
+        for name in self.skipped:
+            results[name] = "skipped"
+        for name in self.failures:
+            results[name] = "failed"
+        self._save_log(results)
+
     def _ensure_homebrew(self):
         if not self._has_homebrew():
             self._install_homebrew()
         else:
             print(f"{C.GREEN}Homebrew is already installed.{C.RESET}")
 
-    @staticmethod
-    def _partition_categories(categories: list) -> tuple[list, list]:
-        terminal = []
-        others = []
-        for cat in categories:
-            if cat["name"] == "Terminal":
-                terminal.append(cat)
-            else:
-                others.append(cat)
-        return terminal, others
+    def _flatten_apps(self) -> list:
+        apps = []
+        for cat in self.catalog.get("categories", []):
+            for app in cat["apps"]:
+                app_copy = dict(app)
+                app_copy["_category"] = cat["name"]
+                apps.append(app_copy)
+        return apps
 
     @staticmethod
     def _report_skipped(installed_apps: list):
@@ -177,53 +265,57 @@ class SetupWizard:
     def run(self):
         self._ensure_homebrew()
 
-        terminal_cats, other_cats = self._partition_categories(
-            self.catalog.get("categories", [])
-        )
+        all_apps = self._flatten_apps()
+        log = self._load_log()
+        retry_failed = self._prompt_retry_failed(log)
 
-        # Terminal category: check up front, auto-select missing
-        for cat in terminal_cats:
-            installed, missing = self._check_apps(cat["apps"])
-            self._report_skipped(installed)
-            self.successes.extend(a["name"] for a in installed)
-            self.selected.extend(missing)
+        if retry_failed:
+            preselected = {name for name, status in log.items() if status == "failed"}
+        else:
+            preselected = {a["name"] for a in all_apps}
 
-        # Other categories: check up front, prompt only for missing
-        for cat in other_cats:
-            installed, missing = self._check_apps(cat["apps"])
-            self._report_skipped(installed)
-            self.successes.extend(a["name"] for a in installed)
-            if missing:
-                indices = self._prompt_category(cat["name"], missing)
-                for idx in indices:
-                    self.selected.append(missing[idx])
+        selected = self._select_apps(all_apps, preselected)
+
+        selected_terminal = [a for a in selected if a["_category"] == "Terminal"]
+        selected_others = [a for a in selected if a["_category"] != "Terminal"]
+
+        # Terminal category: check up front
+        installed, missing = self._check_apps(selected_terminal)
+        self._report_skipped(installed)
+        self.skipped.extend(a["name"] for a in installed)
+        self.selected.extend(missing)
+
+        # Other categories: check up front
+        installed, missing = self._check_apps(selected_others)
+        self._report_skipped(installed)
+        self.skipped.extend(a["name"] for a in installed)
+        self.selected.extend(missing)
 
         self._install()
 
     def run_non_interactive(self, category: str | None = None):
         self._ensure_homebrew()
 
-        terminal_cats, other_cats = self._partition_categories(
-            self.catalog.get("categories", [])
-        )
+        all_apps = self._flatten_apps()
 
-        target_name = category.lower() if category else None
+        if category:
+            target = category.lower()
+            all_apps = [a for a in all_apps if a["_category"].lower() == target]
 
-        # Terminal category: check up front, auto-select missing
-        for cat in terminal_cats:
-            installed, missing = self._check_apps(cat["apps"])
-            self._report_skipped(installed)
-            self.successes.extend(a["name"] for a in installed)
-            self.selected.extend(missing)
+        selected_terminal = [a for a in all_apps if a["_category"] == "Terminal"]
+        selected_others = [a for a in all_apps if a["_category"] != "Terminal"]
 
-        # Other categories: check up front, select missing
-        for cat in other_cats:
-            if target_name and cat["name"].lower() != target_name:
-                continue
-            installed, missing = self._check_apps(cat["apps"])
-            self._report_skipped(installed)
-            self.successes.extend(a["name"] for a in installed)
-            self.selected.extend(missing)
+        # Terminal category: check up front
+        installed, missing = self._check_apps(selected_terminal)
+        self._report_skipped(installed)
+        self.skipped.extend(a["name"] for a in installed)
+        self.selected.extend(missing)
+
+        # Other categories: check up front
+        installed, missing = self._check_apps(selected_others)
+        self._report_skipped(installed)
+        self.skipped.extend(a["name"] for a in installed)
+        self.selected.extend(missing)
 
         self._install()
 
