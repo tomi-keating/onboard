@@ -100,6 +100,21 @@ class SetupWizard:
                     f"{C.RED}Invalid input. Use numbers, 'all', or 'none'.{C.RESET}"
                 )
 
+    @staticmethod
+    def _check_apps(apps: list) -> tuple[list, list]:
+        """Return (installed_apps, missing_apps) after checking upfront."""
+        installed = []
+        missing = []
+        for app in apps:
+            check = app.get("check")
+            if check:
+                result = subprocess.run(check, shell=True, capture_output=True)
+                if result.returncode == 0:
+                    installed.append(app)
+                    continue
+            missing.append(app)
+        return installed, missing
+
     def _install(self):
         total = len(self.selected)
         if total == 0:
@@ -110,19 +125,6 @@ class SetupWizard:
         for i, app in enumerate(self.selected, 1):
             name = app["name"]
             cmd = app["command"]
-
-            # Skip if already installed
-            if app.get("check"):
-                check_result = subprocess.run(
-                    app["check"], shell=True, capture_output=True
-                )
-                if check_result.returncode == 0:
-                    print(
-                        f"{C.CYAN}[{i}/{total}] {name}{C.RESET} "
-                        f"{C.GREEN}✓ already installed{C.RESET}"
-                    )
-                    self.successes.append(name)
-                    continue
 
             print(f"{C.CYAN}[{i}/{total}] Installing {name}...{C.RESET}")
             result = subprocess.run(cmd, shell=True)
@@ -164,6 +166,14 @@ class SetupWizard:
                 others.append(cat)
         return terminal, others
 
+    @staticmethod
+    def _report_skipped(installed_apps: list):
+        if installed_apps:
+            print(
+                f"{C.GREEN}Skipping {len(installed_apps)} already installed app(s): "
+                f"{', '.join(a['name'] for a in installed_apps)}{C.RESET}"
+            )
+
     def run(self):
         self._ensure_homebrew()
 
@@ -171,14 +181,22 @@ class SetupWizard:
             self.catalog.get("categories", [])
         )
 
-        # Always install Terminal first without prompting
+        # Terminal category: check up front, auto-select missing
         for cat in terminal_cats:
-            self.selected.extend(cat["apps"])
+            installed, missing = self._check_apps(cat["apps"])
+            self._report_skipped(installed)
+            self.successes.extend(a["name"] for a in installed)
+            self.selected.extend(missing)
 
+        # Other categories: check up front, prompt only for missing
         for cat in other_cats:
-            indices = self._prompt_category(cat["name"], cat["apps"])
-            for idx in indices:
-                self.selected.append(cat["apps"][idx])
+            installed, missing = self._check_apps(cat["apps"])
+            self._report_skipped(installed)
+            self.successes.extend(a["name"] for a in installed)
+            if missing:
+                indices = self._prompt_category(cat["name"], missing)
+                for idx in indices:
+                    self.selected.append(missing[idx])
 
         self._install()
 
@@ -191,14 +209,21 @@ class SetupWizard:
 
         target_name = category.lower() if category else None
 
-        # Always install Terminal first
+        # Terminal category: check up front, auto-select missing
         for cat in terminal_cats:
-            self.selected.extend(cat["apps"])
+            installed, missing = self._check_apps(cat["apps"])
+            self._report_skipped(installed)
+            self.successes.extend(a["name"] for a in installed)
+            self.selected.extend(missing)
 
+        # Other categories: check up front, select missing
         for cat in other_cats:
             if target_name and cat["name"].lower() != target_name:
                 continue
-            self.selected.extend(cat["apps"])
+            installed, missing = self._check_apps(cat["apps"])
+            self._report_skipped(installed)
+            self.successes.extend(a["name"] for a in installed)
+            self.selected.extend(missing)
 
         self._install()
 
