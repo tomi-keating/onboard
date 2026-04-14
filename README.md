@@ -12,11 +12,13 @@ cd macsetup
 
 ## What it does
 
-1. **Checks for Homebrew** and installs it automatically if missing.
-2. **Presents apps by category** in an interactive command-line menu.
-3. **Installs your selections** by running the corresponding shell commands.
-4. **Skips apps that are already installed** (when a `check` command is provided).
-5. **Prints a clear summary** of successes and failures.
+1. **Precheck** — Verifies Xcode Command Line Tools are installed (required by Homebrew).
+2. **Checks for Homebrew** and installs it automatically if missing.
+3. **Presents an interactive TUI checklist** of all available apps. Use ↑/↓ to navigate, Space to toggle, and Enter to confirm.
+4. **Installs your selections** by running the corresponding commands in the order they appear in the catalog.
+5. **Skips apps that are already installed** (when a `check` command is provided).
+6. **Logs results** to `setup.log` and offers to retry failed apps on the next run.
+7. **Prints a clear summary** of successes, skips, and failures.
 
 ## Requirements
 
@@ -34,14 +36,15 @@ cd macsetup
 
 ## Customizing the App List
 
-Edit [`apps.json`](apps.json). Each app entry looks like this:
+Edit [`apps.json`](apps.json). The catalog is a flat ordered JSON array; each entry looks like this:
 
 ```json
 {
-  "name": "Visual Studio Code",
-  "command": "brew install --cask visual-studio-code",
-  "description": "Code editor",
-  "check": "which code"
+  "name": "iTerm2",
+  "command": "brew install --cask iterm2",
+  "description": "Popular terminal emulator for macOS",
+  "check": "ls /Applications/iTerm.app",
+  "category": "Terminal"
 }
 ```
 
@@ -51,14 +54,23 @@ Edit [`apps.json`](apps.json). Each app entry looks like this:
 | `command` | Shell command executed to install the app |
 | `description` | Optional short description shown in the menu |
 | `check` | Optional command to detect if already installed (skips when exit code is 0) |
+| `category` | Optional category label used by `--category` |
 
 ## Project Structure
 
 ```
 .
-├── README.md    # This file
-├── setup        # Main executable (Python 3)
-└── apps.json    # App catalog
+├── README.md         # This file
+├── CLAUDE.md         # Guidance for Claude Code
+├── setup             # Main executable (Python 3)
+├── apps.json         # App catalog
+├── scripts/          # Per-app installation scripts
+│   ├── precheck.sh
+│   ├── install-oh-my-zsh.sh
+│   ├── install-nvm.sh
+│   ├── install-pyenv.sh
+│   └── install-gvm.sh
+└── setup.log         # Install log (ignored by git)
 ```
 
 No build step. No package manager. Just run `./setup`.
