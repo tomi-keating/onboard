@@ -83,7 +83,8 @@
         {
           "name": "iTerm2",
           "command": "brew install --cask iterm2",
-          "description": "Popular terminal emulator for macOS"
+          "description": "Popular terminal emulator for macOS",
+          "check": "ls /Applications/iTerm.app"
         }
       ]
     }
