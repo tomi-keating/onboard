@@ -125,7 +125,7 @@
   },
   {
     "name": "gvm",
-    "command": "sh scripts/install-gvm.sh",
+    "command": "bash scripts/install-gvm.sh",
     "description": "Go Version Manager",
     "check": "which gvm",
     "category": "Development"
