@@ -221,12 +221,12 @@ class SetupWizard:
             print(f"{C.CYAN}[{i}/{total}] Installing {name}...{C.RESET}")
             result = subprocess.run(cmd, shell=True)
             if result.returncode == 0:
-                print(f"  {C.GREEN}✓ Success{C.RESET}")
+                print(f"{C.GREEN}✓ {name} installed successfully{C.RESET}")
                 self.successes.append(name)
                 if name == "Homebrew":
                     self._update_brew_path()
             else:
-                print(f"  {C.RED}✗ Failed{C.RESET}")
+                print(f"{C.RED}✗ {name} installation failed{C.RESET}")
                 self.failures.append(name)
                 if name == "Precheck":
                     print(
