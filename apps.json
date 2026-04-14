@@ -108,6 +108,12 @@
           "command": "sh scripts/install-pyenv.sh",
           "description": "Simple Python version management",
           "check": "which pyenv"
+        },
+        {
+          "name": "gvm",
+          "command": "sh scripts/install-gvm.sh",
+          "description": "Go Version Manager",
+          "check": "which gvm"
         }
       ]
     }
