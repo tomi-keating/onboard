@@ -93,6 +93,17 @@
           "check": "ls ~/.oh-my-zsh"
         }
       ]
+    },
+    {
+      "name": "Development",
+      "apps": [
+        {
+          "name": "nvm",
+          "command": "sh scripts/install-nvm.sh",
+          "description": "Node Version Manager - manage multiple active node.js versions",
+          "check": "ls ~/.nvm"
+        }
+      ]
     }
   ]
 }
