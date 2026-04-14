@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+"""
+MacSetup — Single entry point to configure a fresh macOS install.
+Zero external dependencies. Uses Python 3 standard library only.
+"""
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+
+class C:
+    """ANSI color codes"""
+
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
+
+
+class SetupWizard:
+    def __init__(self, catalog_path: Path):
+        self.catalog_path = catalog_path
+        self.catalog = self._load_catalog()
+        self.selected = []
+        self.successes = []
+        self.failures = []
+
+    def _load_catalog(self):
+        try:
+            with open(self.catalog_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            print(f"{C.RED}Error: Catalog file not found at {self.catalog_path}{C.RESET}")
+            sys.exit(1)
+        except json.JSONDecodeError as exc:
+            print(f"{C.RED}Error: Invalid JSON in catalog: {exc}{C.RESET}")
+            sys.exit(1)
+
+    @staticmethod
+    def _has_homebrew() -> bool:
+        return shutil.which("brew") is not None
+
+    @staticmethod
+    def _install_homebrew():
+        print(f"{C.CYAN}Homebrew not found. Installing now...{C.RESET}")
+        cmd = (
+            '/bin/bash -c "$(curl -fsSL '
+            'https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        )
+        result = subprocess.run(cmd, shell=True)
+        if result.returncode != 0:
+            print(
+                f"{C.RED}Homebrew installation failed. "
+                f"Please install manually and rerun.{C.RESET}"
+            )
+            sys.exit(1)
+
+        # Ensure brew is in PATH for the remainder of this session
+        arch = os.uname().machine
+        brew_bin = "/opt/homebrew/bin" if arch == "arm64" else "/usr/local/bin"
+        current_path = os.environ.get("PATH", "")
+        if brew_bin not in current_path:
+            os.environ["PATH"] = f"{brew_bin}:{current_path}"
+
+        print(f"{C.GREEN}Homebrew installed successfully.{C.RESET}")
+
+    def _prompt_category(self, category_name: str, apps: list) -> list:
+        print(f"\n{C.BOLD}{category_name}{C.RESET}")
+        for i, app in enumerate(apps, 1):
+            desc = f" — {app['description']}" if app.get("description") else ""
+            print(f"  [{i}] {app['name']}{desc}")
+        print("  [0] Skip category")
+
+        while True:
+            raw = (
+                input(
+                    f"{C.YELLOW}Select (comma-separated numbers, 'all', or 'none'): {C.RESET}"
+                )
+                .strip()
+                .lower()
+            )
+            if raw in ("", "0", "none"):
+                return []
+            if raw == "all":
+                return list(range(len(apps)))
+            try:
+                indices = [int(x.strip()) - 1 for x in raw.split(",")]
+                if all(0 <= idx < len(apps) for idx in indices):
+                    return indices
+                print(f"{C.RED}Invalid selection. Try again.{C.RESET}")
+            except ValueError:
+                print(
+                    f"{C.RED}Invalid input. Use numbers, 'all', or 'none'.{C.RESET}"
+                )
+
+    def _install(self):
+        total = len(self.selected)
+        if total == 0:
+            print(f"\n{C.YELLOW}No apps selected. Exiting.{C.RESET}")
+            return
+
+        print(f"\n{C.BOLD}Installing {total} app(s)...{C.RESET}\n")
+        for i, app in enumerate(self.selected, 1):
+            name = app["name"]
+            cmd = app["command"]
+
+            # Skip if already installed
+            if app.get("check"):
+                check_result = subprocess.run(
+                    app["check"], shell=True, capture_output=True
+                )
+                if check_result.returncode == 0:
+                    print(
+                        f"{C.CYAN}[{i}/{total}] {name}{C.RESET} "
+                        f"{C.GREEN}✓ already installed{C.RESET}"
+                    )
+                    self.successes.append(name)
+                    continue
+
+            print(f"{C.CYAN}[{i}/{total}] Installing {name}...{C.RESET}")
+            result = subprocess.run(cmd, shell=True)
+            if result.returncode == 0:
+                print(f"  {C.GREEN}✓ Success{C.RESET}")
+                self.successes.append(name)
+            else:
+                print(f"  {C.RED}✗ Failed{C.RESET}")
+                self.failures.append(name)
+
+        # Summary
+        print(f"\n{C.BOLD}=== Summary ==={C.RESET}")
+        print(f"{C.GREEN}Installed / already present: {len(self.successes)}{C.RESET}")
+        for s in self.successes:
+            print(f"  ✓ {s}")
+
+        if self.failures:
+            print(f"{C.RED}Failed: {len(self.failures)}{C.RESET}")
+            for f in self.failures:
+                print(f"  ✗ {f}")
+            print(
+                f"\n{C.YELLOW}Run the script again to retry failed installations.{C.RESET}"
+            )
+
+    def run(self):
+        if not self._has_homebrew():
+            self._install_homebrew()
+        else:
+            print(f"{C.GREEN}Homebrew is already installed.{C.RESET}")
+
+        for cat in self.catalog.get("categories", []):
+            indices = self._prompt_category(cat["name"], cat["apps"])
+            for idx in indices:
+                self.selected.append(cat["apps"][idx])
+
+        self._install()
+
+    def run_non_interactive(self, category: str | None = None):
+        if not self._has_homebrew():
+            self._install_homebrew()
+        for cat in self.catalog.get("categories", []):
+            if category and cat["name"].lower() != category.lower():
+                continue
+            self.selected.extend(cat["apps"])
+        self._install()
+
+    def list_apps(self):
+        for cat in self.catalog.get("categories", []):
+            print(f"\n{C.BOLD}{cat['name']}{C.RESET}")
+            for app in cat["apps"]:
+                desc = f" — {app['description']}" if app.get("description") else ""
+                print(f"  • {app['name']}{desc}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="MacSetup — Single entry point to configure a fresh macOS install."
+    )
+    parser.add_argument(
+        "--list", action="store_true", help="List available apps and exit"
+    )
+    parser.add_argument(
+        "--install-all",
+        action="store_true",
+        help="Install every app non-interactively",
+    )
+    parser.add_argument(
+        "--category", type=str, help="Install only a specific category non-interactively"
+    )
+    args = parser.parse_args()
+
+    catalog = Path(__file__).parent / "apps.json"
+    wizard = SetupWizard(catalog)
+
+    try:
+        if args.list:
+            wizard.list_apps()
+        elif args.install_all or args.category:
+            wizard.run_non_interactive(category=args.category)
+        else:
+            wizard.run()
+    except KeyboardInterrupt:
+        print(f"\n{C.YELLOW}Interrupted by user. Exiting.{C.RESET}")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,81 @@
+{
+  "categories": [
+    {
+      "name": "Core CLI Tools",
+      "apps": [
+        {
+          "name": "Git",
+          "command": "brew install git",
+          "description": "Version control system",
+          "check": "which git"
+        },
+        {
+          "name": "curl",
+          "command": "brew install curl",
+          "description": "Command-line tool for transferring data with URLs",
+          "check": "which curl"
+        },
+        {
+          "name": "jq",
+          "command": "brew install jq",
+          "description": "Lightweight and flexible command-line JSON processor",
+          "check": "which jq"
+        },
+        {
+          "name": "yq",
+          "command": "brew install yq",
+          "description": "Portable command-line YAML processor",
+          "check": "which yq"
+        },
+        {
+          "name": "wget",
+          "command": "brew install wget",
+          "description": "Internet file retriever",
+          "check": "which wget"
+        },
+        {
+          "name": "GNU grep",
+          "command": "brew install grep",
+          "description": "GNU grep (installed as ggrep by default)",
+          "check": "which ggrep"
+        },
+        {
+          "name": "GNU findutils",
+          "command": "brew install findutils",
+          "description": "GNU find, xargs, and locate (installed as gfind, gxargs, glocate)",
+          "check": "which gfind"
+        },
+        {
+          "name": "GNU sed",
+          "command": "brew install gnu-sed",
+          "description": "GNU stream editor (installed as gsed by default)",
+          "check": "which gsed"
+        },
+        {
+          "name": "gawk",
+          "command": "brew install gawk",
+          "description": "GNU awk text processing engine",
+          "check": "which gawk"
+        },
+        {
+          "name": "less",
+          "command": "brew install less",
+          "description": "Pager program similar to more",
+          "check": "which less"
+        },
+        {
+          "name": "tree",
+          "command": "brew install tree",
+          "description": "Display directories as trees",
+          "check": "which tree"
+        },
+        {
+          "name": "fzf",
+          "command": "brew install fzf",
+          "description": "Command-line fuzzy finder",
+          "check": "which fzf"
+        }
+      ]
+    }
+  ]
+}
