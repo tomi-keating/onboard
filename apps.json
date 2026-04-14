@@ -102,6 +102,12 @@
           "command": "sh scripts/install-nvm.sh",
           "description": "Node Version Manager - manage multiple active node.js versions",
           "check": "ls ~/.nvm"
+        },
+        {
+          "name": "pyenv",
+          "command": "sh scripts/install-pyenv.sh",
+          "description": "Simple Python version management",
+          "check": "which pyenv"
         }
       ]
     }
