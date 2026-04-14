@@ -88,7 +88,7 @@
         },
         {
           "name": "Oh My Zsh",
-          "command": "sh install-oh-my-zsh.sh",
+          "command": "sh scripts/install-oh-my-zsh.sh",
           "description": "A delightful, open-source, community-driven framework for managing your Zsh configuration",
           "check": "ls ~/.oh-my-zsh"
         }
