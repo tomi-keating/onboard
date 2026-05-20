@@ -16,7 +16,7 @@ This is a **zero-dependency** Python 3 CLI tool for setting up a fresh macOS ins
 
 - **`setup`** — The single executable entry point. Uses only the Python standard library. Auto-installs Homebrew if missing and adds it to `PATH` for the current session.
 - **`apps.json`** — The app catalog. A flat ordered JSON array of apps, each with `name`, `command`, `description`, and optional `check` fields. Order in the array determines installation order. The `check` command is used to skip already-installed apps.
-- **`scripts/`** — Per-app installation scripts for complex setups (e.g. `precheck.sh`, `install-oh-my-zsh.sh`, `install-nvm.sh`, `install-pyenv.sh`, `install-gvm.sh`).
+- **`scripts/`** — Per-app installation scripts for complex setups (e.g. `precheck.sh`, `install-oh-my-zsh.sh`, `install-nvm.sh`, `install-gvm.sh`).
 
 ### Key Behaviors
 

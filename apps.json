@@ -33,6 +33,13 @@
     "category": "Development"
   },
   {
+    "name": "Python",
+    "command": "MISE_PYTHON_GITHUB_ATTESTATIONS=false ~/.local/bin/mise use --global python@3.14",
+    "description": "Python 3.14 via mise",
+    "check": "~/.local/bin/mise list python 2>/dev/null | grep -q 3.14",
+    "category": "Development"
+  },
+  {
     "name": "jq",
     "command": "brew install jq",
     "description": "Lightweight and flexible command-line JSON processor",
@@ -121,13 +128,6 @@
     "command": "sh scripts/install-nvm.sh",
     "description": "Node Version Manager - manage multiple active node.js versions",
     "check": "ls ~/.nvm",
-    "category": "Development"
-  },
-  {
-    "name": "pyenv",
-    "command": "sh scripts/install-pyenv.sh",
-    "description": "Simple Python version management",
-    "check": "which pyenv",
     "category": "Development"
   },
   {
