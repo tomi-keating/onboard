@@ -129,12 +129,5 @@
     "description": "A delightful, open-source, community-driven framework for managing your Zsh configuration",
     "check": "ls ~/.oh-my-zsh",
     "category": "Terminal"
-  },
-  {
-    "name": "gvm",
-    "command": "bash scripts/install-gvm.sh",
-    "description": "Go Version Manager",
-    "check": "which gvm",
-    "category": "Development"
   }
 ]

@@ -66,8 +66,7 @@ Edit [`apps.json`](apps.json). The catalog is a flat ordered JSON array; each en
 ├── apps.json         # App catalog
 ├── scripts/          # Per-app installation scripts
 │   ├── precheck.sh
-│   ├── install-oh-my-zsh.sh
-│   └── install-gvm.sh
+│   └── install-oh-my-zsh.sh
 └── setup.log         # Install log (ignored by git)
 ```
 
