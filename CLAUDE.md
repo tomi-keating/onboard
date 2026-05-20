@@ -16,12 +16,12 @@ This is a **zero-dependency** Python 3 CLI tool for setting up a fresh macOS ins
 
 - **`setup`** — The single executable entry point. Uses only the Python standard library. Auto-installs Homebrew if missing and adds it to `PATH` for the current session.
 - **`apps.json`** — The app catalog. A flat ordered JSON array of apps, each with `name`, `command`, `description`, and optional `check` fields. Order in the array determines installation order. The `check` command is used to skip already-installed apps.
-- **`scripts/`** — Per-app installation scripts for complex setups (e.g. `precheck.sh`, `install-oh-my-zsh.sh`).
+- **`scripts/`** — Per-app installation scripts for complex setups (e.g. `precheck.sh`).
 
 ### Key Behaviors
 
 - **Interactive checklist UI:** In interactive mode, all apps are displayed in a single scrollable TUI. Use ↑/↓ to navigate, Space to select/unselect, and Enter to confirm. By default all apps are selected.
-- **Mandatory apps:** `Precheck`, `Homebrew`, `iTerm2`, and `Oh My Zsh` are mandatory and cannot be unselected.
+- **Mandatory apps:** `Precheck`, `Homebrew`, and `iTerm2` are mandatory and cannot be unselected.
 - **Installation order:** Apps are installed in the exact order they appear in `apps.json`.
 - **Upfront install checks:** Before installation, the script runs each app's `check` command. Already-installed apps are skipped and reported separately in the summary.
 - **Install logging:** Results are written to `setup.log` (ignored by git). On the next run, if previous failures exist, the tool asks whether to retry only the failed apps.
