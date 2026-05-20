@@ -124,13 +124,6 @@
     "category": "Terminal"
   },
   {
-    "name": "nvm",
-    "command": "sh scripts/install-nvm.sh",
-    "description": "Node Version Manager - manage multiple active node.js versions",
-    "check": "ls ~/.nvm",
-    "category": "Development"
-  },
-  {
     "name": "gvm",
     "command": "bash scripts/install-gvm.sh",
     "description": "Go Version Manager",
