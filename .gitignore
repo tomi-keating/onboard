@@ -2,3 +2,4 @@ __pycache__/
 .claude/
 log/
 setup.log
+.DS_Store
