@@ -26,6 +26,13 @@
     "category": "Core CLI Tools"
   },
   {
+    "name": "mise",
+    "command": "sh scripts/install-mise.sh",
+    "description": "Polyglot tool version manager (asdf rust clone)",
+    "check": "ls ~/.local/bin/mise",
+    "category": "Development"
+  },
+  {
     "name": "jq",
     "command": "brew install jq",
     "description": "Lightweight and flexible command-line JSON processor",
