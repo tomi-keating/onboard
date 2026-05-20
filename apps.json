@@ -12,6 +12,13 @@
     "check": "which brew"
   },
   {
+    "name": "Zsh",
+    "command": "brew install zsh-autosuggestions && brew install zsh-syntax-highlighting",
+    "description": "Zsh shell with autosuggestions and syntax highlighting",
+    "check": "brew list zsh &>/dev/null",
+    "category": "Terminal"
+  },
+  {
     "name": "Git",
     "command": "brew install git",
     "description": "Version control system",
