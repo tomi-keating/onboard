@@ -131,6 +131,20 @@
     "category": "Core CLI Tools"
   },
   {
+    "name": "zoxide",
+    "command": "sh scripts/install-zoxide.sh",
+    "description": "A smarter cd command",
+    "check": "which zoxide",
+    "category": "Core CLI Tools"
+  },
+  {
+    "name": "Yazi",
+    "command": "sh scripts/install-yazi.sh",
+    "description": "Rust-based terminal file manager with preview support",
+    "check": "which yazi",
+    "category": "Core CLI Tools"
+  },
+  {
     "name": "iTerm2",
     "command": "brew install --cask iterm2",
     "description": "Popular terminal emulator for macOS",
