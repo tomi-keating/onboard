@@ -136,5 +136,12 @@
     "description": "Popular terminal emulator for macOS",
     "check": "ls /Applications/iTerm.app",
     "category": "Terminal"
+  },
+  {
+    "name": "Ghostty",
+    "command": "brew install --cask ghostty",
+    "description": "Fast, feature-rich, and cross-platform terminal emulator",
+    "check": "ls /Applications/Ghostty.app",
+    "category": "Terminal"
   }
 ]
