@@ -40,6 +40,13 @@
     "category": "Development"
   },
   {
+    "name": "Node",
+    "command": "~/.local/bin/mise use --global node@22",
+    "description": "Node.js 22 LTS via mise",
+    "check": "~/.local/bin/mise list node 2>/dev/null | grep -q 22",
+    "category": "Development"
+  },
+  {
     "name": "jq",
     "command": "brew install jq",
     "description": "Lightweight and flexible command-line JSON processor",
