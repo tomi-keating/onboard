@@ -47,6 +47,13 @@
     "category": "Development"
   },
   {
+    "name": "Go",
+    "command": "~/.local/bin/mise use --global go@1.24",
+    "description": "Go 1.24 via mise",
+    "check": "~/.local/bin/mise list go 2>/dev/null | grep -q 1.24",
+    "category": "Development"
+  },
+  {
     "name": "jq",
     "command": "brew install jq",
     "description": "Lightweight and flexible command-line JSON processor",
