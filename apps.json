@@ -82,6 +82,13 @@
     "category": "Development"
   },
   {
+    "name": "Codex",
+    "command": "brew install codex",
+    "description": "OpenAI's official CLI for Codex",
+    "check": "which codex",
+    "category": "Development"
+  },
+  {
     "name": "jq",
     "command": "brew install jq",
     "description": "Lightweight and flexible command-line JSON processor",
