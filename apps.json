@@ -54,6 +54,13 @@
     "category": "Development"
   },
   {
+    "name": "Bun",
+    "command": "curl -fsSL https://bun.sh/install | bash",
+    "description": "Fast JavaScript runtime, bundler, and package manager",
+    "check": "which bun",
+    "category": "Development"
+  },
+  {
     "name": "Go",
     "command": "~/.local/bin/mise use --global go@1.24",
     "description": "Go 1.24 via mise",
