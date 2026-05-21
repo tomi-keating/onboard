@@ -152,6 +152,13 @@
     "category": "Terminal"
   },
   {
+    "name": "starship",
+    "command": "sh scripts/install-starship.sh",
+    "description": "Minimal, blazing-fast, and infinitely customizable prompt",
+    "check": "which starship",
+    "category": "Terminal"
+  },
+  {
     "name": "iTerm2",
     "command": "brew install --cask iterm2",
     "description": "Popular terminal emulator for macOS",
