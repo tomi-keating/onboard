@@ -41,7 +41,7 @@ set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
 
 # 开启 256 色支持，防止终端颜色掉色
-set -g default-terminal "screen-256color"
+set -g default-terminal "tmux-256color"
 
 # 自动保存会话
 set -g @continuum-restore 'on'
