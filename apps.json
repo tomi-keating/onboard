@@ -68,6 +68,13 @@
     "category": "Development"
   },
   {
+    "name": "OpenCode",
+    "command": "curl -fsSL https://opencode.ai/install | bash",
+    "description": "AI coding assistant CLI",
+    "check": "which opencode",
+    "category": "Development"
+  },
+  {
     "name": "jq",
     "command": "brew install jq",
     "description": "Lightweight and flexible command-line JSON processor",
