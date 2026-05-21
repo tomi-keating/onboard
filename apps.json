@@ -145,6 +145,13 @@
     "category": "Core CLI Tools"
   },
   {
+    "name": "tmux",
+    "command": "sh scripts/setup-tmux.sh",
+    "description": "Terminal multiplexer with TPM and custom config",
+    "check": "which tmux",
+    "category": "Terminal"
+  },
+  {
     "name": "iTerm2",
     "command": "brew install --cask iterm2",
     "description": "Popular terminal emulator for macOS",
