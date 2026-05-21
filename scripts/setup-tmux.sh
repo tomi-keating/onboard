@@ -16,6 +16,12 @@ bind C-a send-prefix
 # 允许用鼠标点击切换面板、调整面板大小、滚动屏幕
 set -g mouse on
 
+# 消除 escape 时间延迟
+set -s escape-time 10
+
+# 提高历史记录限制
+set -g history-limit 50000
+
 # 从 1 开始编号（0 太远）
 set -g base-index 1
 setw -g pane-base-index 1
