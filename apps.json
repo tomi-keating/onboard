@@ -213,5 +213,12 @@
     "description": "Fast, feature-rich, and cross-platform terminal emulator",
     "check": "ls /Applications/Ghostty.app",
     "category": "Terminal"
+  },
+  {
+    "name": "Stats",
+    "command": "brew install --cask stats",
+    "description": "System monitor for the menu bar",
+    "check": "ls /Applications/Stats.app",
+    "category": "System"
   }
 ]
