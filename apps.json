@@ -75,6 +75,13 @@
     "category": "Development"
   },
   {
+    "name": "CC Switch",
+    "command": "brew install --cask cc-switch",
+    "description": "Configuration manager for AI coding agents",
+    "check": "ls /Applications/CC\\ Switch.app",
+    "category": "Development"
+  },
+  {
     "name": "OpenCode",
     "command": "curl -fsSL https://opencode.ai/install | bash",
     "description": "AI coding assistant CLI",
