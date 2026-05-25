@@ -76,7 +76,7 @@
   },
   {
     "name": "CC Switch",
-    "command": "brew install --cask cc-switch",
+    "command": "sh scripts/install-cc-switch.sh",
     "description": "Configuration manager for AI coding agents",
     "check": "ls /Applications/CC\\ Switch.app",
     "category": "Development"
